@@ -1,0 +1,17 @@
+\section{Related work}
+
+\subsection{GEDI supervised canopy height mapping}
+
+GEDI was designed to measure forest vertical structure and provides the structural references used in this study \citep{dubayah2020}. Lang et al. \citep{lang2023} learned canopy-top height from dense Sentinel-2 imagery and sparse GEDI data, producing a global map at 10 m ground sampling distance with predictive uncertainty. Their work establishes a direct precedent for sparse-label image regression. Our study examines a narrower regional question: whether adding SAR through early or separate-encoder fusion improves prediction over a comparable optical baseline. The output is a GEDI-RH98-supervised structural estimate, not independently observed height at every 10 m cell.
+
+\subsection{Optical and SAR fusion for mangrove structure}
+
+Multisensor mangrove height estimation is also established. Jia et al. \citep{jia2025} combined UAV lidar references with SDGSAT-1 and Sentinel-1/2 imagery in an XGBoost workflow for coastal China. Jamaluddin et al. \citep{jamaluddin2025} investigated a spatial--spectral--temporal deep regression model combining optimized Sentinel-2 red-edge bands with Sentinel-1 SAR. These studies motivate comparison of complementary sensing modalities and show that neither mangrove height estimation nor SAR--optical integration is new by itself. Our experiments focus on a consistent regional GEDI-supervised comparison between input fusion and separate modality encoders. Published accuracies are not directly comparable because reference sources, height definitions, sampling, and evaluation domains differ.
+
+\subsection{Dense regression from sparse references}
+
+An encoder--decoder network can predict a dense image even when only some output cells carry labels. The U-Net architecture \citep{ronneberger2015} combines an encoding path with a decoding path and spatial skip connections; here it is adapted to one-channel height regression. Sparse references constrain the model through a masked objective, while unlabeled output cells receive no direct height loss. This avoids creating interpolated pseudo-labels, but it also means that smooth or detailed predictions between references require independent validation. Sparse training is therefore a property of supervision, not evidence that the recovered map is accurate everywhere.
+
+\subsection{Mangrove height and biomass}
+
+Simard et al. \citep{simard2019} examined global mangrove height patterns and carbon stocks, illustrating the ecological relevance of structural mapping. Regional multisensor work \citep{jia2025,jamaluddin2025} further demonstrates the value of height as a mapping target. The present paper remains focused on canopy height: no biomass or carbon-stock estimates are validated here. A later carbon application would need locally defensible allometry and uncertainty propagation beyond the height-prediction errors reported in this study.

@@ -1,0 +1,58 @@
+\section{Study area and data}
+
+\subsection{Study domain and predictor imagery}
+
+The study domain comprises masked mangrove areas in Cà Mau, Vietnam. All inputs are aligned to a common 10 m grid. Sentinel-1 and Sentinel-2 composites cover the 2020--2021 window, and a binary mangrove mask limits the analysis. The exact region-of-interest polygon, projected coordinate reference system, mangrove-mask source and year, and mapped area must be inserted from the processing metadata \TODO{DETAIL NEEDED}. Figure 1 should show the domain, the three spatial subsets, the excluded buffers, and the retained GEDI cells.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lll}
+\hline
+Source & Predictors & Channels \\
+\hline
+Sentinel-1 & VV, VH, VV$-$VH & 3 \\
+Sentinel-2 bands & B2, B3, B4, B5, B6, B7, B8, B8A, B11, B12 & 10 \\
+Optical indices & NDVI, EVI, NDMI, MNDWI & 4 \\
+\hline
+\end{tabular}%
+}
+\caption{Predictor groups. The optical-only model uses 14 channels; the fused models use all 17.}
+\end{table}
+
+The predictors include ten Sentinel-2 bands, four optical indices, and three Sentinel-1 channels (Table 1). Harmonization to 10 m is a grid-alignment operation and does not increase the native information content of coarser bands. The report does not specify the image collections, cloud and shadow masking, compositing reducer, radar orbit selection, backscatter units, speckle treatment, or resampling operators. These settings must be documented from the actual preprocessing code \TODO{DETAIL NEEDED}. In particular, the interpretation of VV$-$VH depends on whether the subtraction was performed on linear or logarithmic backscatter.
+
+\subsection{Sparse GEDI references}
+
+The target raster stores RH98 only at cells associated with GEDI observations; all other target cells remain NaN. A separate validity mask identifies supervised cells. RH98 denotes the relative height at which 98\% of cumulative waveform energy is returned \citep{lang2023}. It is used as a proxy for canopy-top structure, with the limitations of waveform-derived references. GEDI is never interpolated and never supplied as a predictor.
+
+Initial checks identified 8,068 GEDI-mask cells. Five were outside the mangrove mask, leaving 8,063 usable target cells before patch filtering; no invalid RH98 values or missing predictors were reported at these cells. These are raster-cell counts, not necessarily counts of distinct footprints. The product version, acquisition dates, quality/degradation flags, sensitivity and height thresholds, geolocation handling, and rule for multiple observations in one cell remain to be confirmed \TODO{DETAIL NEEDED}. The approximately 25 m footprint support \citep{dubayah2020} must be distinguished from the 10 m raster spacing.
+
+\subsection{Spatial partition and patch construction}
+
+The domain is partitioned into three contiguous regions along easting using nominal training, validation, and test proportions of 70/15/15. A 300 m buffer is excluded on each side of subset boundaries. The split is established before patch selection. Nonoverlapping 256 $\times$ 256 patches are extracted with stride 256; at 10 m spacing each patch spans 2.56 km per side. Selection considers mangrove coverage, predictor completeness, and reference availability. Training requires at least three GEDI target cells per patch, while validation and test require at least one.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llll}
+\hline
+Subset & Patches & GEDI cells & Cells per patch \\
+\hline
+Training & 99 & 6,547 & 66.1 \\
+Validation & 8 & 812 & 101.5 \\
+Test & 5 & 163 & 32.6 \\
+Total & 112 & 7,522 & 67.2 \\
+\hline
+\end{tabular}%
+}
+\caption{Actual retained samples after filtering. Nominal region proportions do not describe the retained patch or reference proportions.}
+\end{table}
+
+Of 230 scanned patches, 112 are retained and 118 are excluded. The retained subsets contain 7,522 supervised cells (Table 2), leaving 541 of the 8,063 initially usable cells outside the retained sample. Filtering changes the empirical subset sizes substantially: training contains 99 of 112 patches, whereas the test region contributes five patches and 163 target cells. Exclusion reason totals in the supplied report do not fully account for all rejected patches; the complete candidate manifest is needed for the final accounting. Each predictor channel is normalized using statistics from the training region, and those statistics are applied unchanged to validation and test.
+
+\textbf{[Figure 1 placeholder]} Study area and evaluation design. Show the mask, region boundaries, both sides of each 300 m buffer, retained patches, and GEDI reference locations. Use a projected scale bar and report the coordinate system. Do not portray excluded or unlabeled cells as independent test references.

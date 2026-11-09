@@ -1,0 +1,56 @@
+\section{Experiments}
+
+\subsection{Evaluation protocol and metrics}
+
+We compare E1--E4 on the same retained spatial subsets. Metrics are calculated by pooling valid held-out GEDI cells within each subset, rather than averaging patch scores. Validation and test are reported separately. The intended model-selection procedure uses validation data; checkpoint selection and any seed-selection rules must be verified in the training logs before submission. A test-selected seed is not used to support the main claim. No random-split, loss, attention, or RH100 ablation is reported as completed.
+
+For N reference cells, residuals e$_i$ = $\hat{y}$$_i$ $-$ y$_i$, and reference mean $\bar{y}$, the evaluation metrics are
+
+\begin{equation} \mathrm{MAE}=\frac{1}{N}\sum_i |e_i|,\quad \mathrm{RMSE}=\sqrt{\frac{1}{N}\sum_i e_i^2}. \end{equation}
+
+\begin{equation} R^2=1-\frac{\sum_i e_i^2}{\sum_i(y_i-\bar{y})^2}. \end{equation}
+
+MAE and RMSE are expressed in meters. R$^2$ compares squared error with a constant predictor equal to the mean reference height within the evaluated subset; it is sensitive to reference-height variation. Reported means and standard deviations are across runs described as seed runs, not confidence intervals over geographic samples. The exact seed list and number of completed runs are inconsistent in the source report and remain to be reconciled. The numerical tables below reproduce its aggregate summaries as provisional results.
+
+\subsection{Main quantitative comparison}
+
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllllll}
+\hline
+Model & Val MAE & Val RMSE & Val R$^2$ & Test MAE & Test RMSE & Test R$^2$ \\
+\hline
+E1 & 3.751 & 4.727 & 0.454 & 2.478 $\pm$ 0.084 & 3.297 $\pm$ 0.159 & 0.091 $\pm$ 0.087 \\
+E2 & 4.716 & 5.655 & 0.218 & 2.854 $\pm$ 0.015 & 3.516 $\pm$ 0.043 & $-$0.033 $\pm$ 0.025 \\
+E3 & 3.799 & 4.720 & 0.455 & 2.467 $\pm$ 0.038 & 3.295 $\pm$ 0.122 & 0.092 $\pm$ 0.067 \\
+E4 & 3.771 & 4.699 & 0.460 & 2.362 $\pm$ 0.137 & 3.123 $\pm$ 0.179 & 0.184 $\pm$ 0.094 \\
+\hline
+\end{tabular}%
+}
+\caption{Provisional aggregate results transcribed from the experiment report. MAE and RMSE are in meters. Validation means are shown without dispersion because the source summaries conflict. Test entries reproduce reported mean $\pm$ standard deviation; seed membership and aggregation require verification against raw logs.}
+\end{table*}
+
+In the supplied aggregate summary, E4 has the lowest mean test MAE and RMSE and the highest mean test R$^2$. Relative to E1, MAE decreases by 0.116 m (approximately 4.7\%) and RMSE by 0.174 m (approximately 5.3\%); R$^2$ increases by 0.093. Relative to E3, E4 reduces MAE by 0.105 m and RMSE by 0.172 m. These are descriptive differences between reported run means. They do not establish statistical significance or consistent improvement for every seed.
+
+E2 performs worse than E1 on both spatial subsets. Its mean test R$^2$ is slightly negative, indicating that its aggregate squared error exceeds that of the within-test mean-reference predictor. This result indicates that the chosen SAR representation and architecture are insufficient as a standalone estimator under this protocol. It does not imply that SAR lacks useful information for fusion. Indeed, E4 combines SAR with optical inputs and has lower reported test errors than E1.
+
+E3 is very close to E1 on test: mean MAE differs by 0.011 m and RMSE by 0.002 m. Its validation MAE is higher than E1, although validation RMSE is marginally lower. Simply adding SAR channels at the input therefore yields little aggregate benefit in the supplied results. E4 provides a more favorable test comparison, suggesting that how the modalities are represented matters for this regional task. Because parameter counts are unavailable, the experiment does not isolate representation design from increased model capacity.
+
+\subsection{Validation behavior and run variability}
+
+The validation ranking is less uniform than the test ranking. E4 has the lowest mean validation RMSE (4.699 m) and highest R$^2$ (0.460), but E1 has the lowest mean validation MAE (3.751 m versus 3.771 m for E4). The RMSE difference between E1 and E4 is only 0.028 m. Thus, the evidence supports a localized test advantage for E4 rather than a strong advantage across every subset and metric.
+
+For all models, reported test absolute errors are lower than validation errors, yet test R$^2$ values are also lower. These outcomes are compatible because R$^2$ is normalized by the reference-height variance of each subset. They may reflect differences in the sampled height distributions, but that explanation cannot be confirmed from aggregate metrics alone. The validation and test height histograms, mean heights, and standard deviations are needed. The small test subset and its concentration in five patches also limit the geographic diversity represented by the scores.
+
+The reported E4 test MAE standard deviation is 0.137 m and the RMSE standard deviation is 0.179 m. Seed variation is substantial relative to the mean difference from E1. Because the models use paired seed settings, raw per-seed differences would provide a more informative comparison than independent interpretation of the marginal standard deviations. Spatial uncertainty additionally requires resampling geographic units or observations grouped by track or location; ordinary cell-level resampling would ignore clustering. No significance test or spatial confidence interval was supplied.
+
+\subsection{Height dependent error and qualitative assessment}
+
+\TODO{RESULTS NEEDED} Height-bin analysis should group held-out references by fixed RH98 intervals and report sample count, MAE, RMSE, and signed bias for each bin. Use identical bins and reference cells across models. This analysis would test whether E4 improves predictions throughout the observed height range or only in its most frequent portion. Bin boundaries and statistics must be computed from prediction/reference pairs; no tall-canopy improvement or saturation effect is asserted here.
+
+\textbf{[Figure 3 placeholder]} Reference and prediction diagnostics. Show validation/test RH98 histograms, prediction-versus-reference plots with identity lines, and signed residuals by height bin. Annotate N and identify the model/checkpoint used. Any ensemble prediction scores must be recomputed rather than inferred from the average of individual-run metrics.
+
+\textbf{[Figure 4 placeholder]} Dense map comparison. Use the same valid inference footprint and height color scale for E1, E3, and E4, with optical imagery for geographic context and GEDI locations as sparse references. Mark uncovered margins and missing predictors. Compare forest boundaries and selected interior areas descriptively; visually plausible details or smoothness alone cannot establish accurate height reconstruction.

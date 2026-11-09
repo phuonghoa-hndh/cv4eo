@@ -1,0 +1,46 @@
+\section{Method}
+
+\subsection{Sparse to dense regression formulation}
+
+Let $X \in \mathbb{R}^{H\times W\times C}$ denote a predictor patch, $Y$ its sparse RH98 target, and $M$ a binary supervision mask. The mask equals one only where a valid GEDI target occurs within the mangrove extent and all required predictors are complete. A network $f_\theta$ maps $X$ to a dense scalar height field $\hat{Y}=f_\theta(X)\in\mathbb{R}^{H\times W}$. At inference, the inputs contain Sentinel measurements only. The target and supervision mask are used during training and reference-based evaluation, not as encoder inputs.
+
+Define $\Omega$ = \{i : M$_i$ = 1\}. The masked regression objective for a patch is
+
+\begin{equation} L(\theta)=\frac{1}{|\Omega|}\sum_{i\in\Omega}\ell(f_\theta(X)_i,Y_i). \end{equation}
+
+The selected pointwise loss $\ell$ and its settings must be inserted from the completed training runs \TODO{DETAIL NEEDED}. L1 uses |e| and MSE uses e$^2$ for residual e. A Huber objective uses ½e$^2$ for |e| $\leq$ $\delta$ and $\delta$(|e| $-$ ½$\delta$) otherwise. These are possible implementations, not completed ablations. The same actual loss is used across the four reported configurations. The exact minibatch reduction must also be specified: averaging patch losses weights patches equally, while pooling all valid batch cells weights patches by reference count. Equation (1) specifies the patch objective only.
+
+To avoid propagation of missing targets, prediction and reference arrays are indexed at valid cells before computing the loss. Multiplying a dense loss by a zero mask is insufficient when invalid targets contain NaN. Patches with no supervised cells have no direct regression objective. Predictor validity should be defined consistently across experiments so that a model is not evaluated on a different set of reference cells because it uses fewer modalities.
+
+\subsection{Fusion configurations}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llll}
+\hline
+ID & Configuration & Input & Encoding \\
+\hline
+E1 & Optical only & 14 S2 channels & Single encoder \\
+E2 & SAR only & 3 S1 channels & Single encoder \\
+E3 & Early fusion & 17 concatenated channels & Single encoder \\
+E4 & Dual encoder & S1 and S2 groups & Separate encoders and feature concatenation \\
+\hline
+\end{tabular}%
+}
+\caption{Experimental configurations. All variants produce a one-channel height prediction.}
+\end{table}
+
+E1 and E2 isolate the predictive value of the two input groups. E3 concatenates the three SAR channels and fourteen optical channels before a single U-Net encoder. E4 processes the modalities through separate encoders, concatenates their features, and uses a common height-regression decoder design. At a fusion location, the operation can be written as Z = concat(E$_1$(XSAR), E$_2$(XOPT)), followed by $\hat{Y}$ = D(Z), with the corresponding skip connections required by the implemented U-Net. This expression describes the fusion principle; it does not assume that fusion occurs at every resolution level.
+
+The report establishes concatenation-based feature fusion, but not the exact encoder widths, number of levels, projection layers, skip-connection fusion locations, normalization layers, activation functions, or output constraints. These details require verification from the trained code \TODO{DETAIL NEEDED}. Figure 2 should show the implemented feature path and tensor dimensions. No attention module, pretrained backbone, or physically constrained output is claimed without that verification.
+
+\textbf{[Figure 2 placeholder]} Sparse-supervision and fusion architecture. Draw Sentinel-1 and Sentinel-2 input groups, their separate encoders, verified concatenation locations, decoder and height output. Show GEDI RH98 entering the loss only. Add the single-encoder input-fusion baseline for comparison.
+
+\subsection{Training controls and prediction coverage}
+
+The documented comparison holds decoder design, loss, optimizer, learning-rate schedule, seeds, normalization, and spatial assignment constant. Batch size, learning rate, epochs, augmentation, early stopping, checkpoint selection, hardware, and software versions are not supplied and must be inserted from the run configuration \TODO{DETAIL NEEDED}. Using the same decoder design does not imply equal parameter counts: the additional encoder can increase capacity. Model parameter counts and inference costs should therefore accompany the final comparison.
+
+A dense prediction raster can be assembled by applying a trained model to valid predictor patches, including patches with no GEDI labels. Such patches support inference but cannot provide reference-based accuracy estimates. The reported extraction leaves a strip of 30 bottom rows and 77 right columns uncovered; at 10 m spacing these correspond to 300 m and 770 m. The final map must explicitly mark those gaps or use a documented edge-padding procedure. Dense map reconstruction is not demonstrated by the supplied aggregate results and is not presented as a completed experiment.
